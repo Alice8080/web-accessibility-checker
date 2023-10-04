@@ -1,6 +1,6 @@
 # Web accessibility checker
 
-Плагин для определения веб-доступности элементов. 
+Плагин для определения веб-доступности элементов. Призер хакатона [IAHD DEI Web Accessibility Hackathon](https://iahdhackathon2023.cc/).
 
 ## Функционал
 
