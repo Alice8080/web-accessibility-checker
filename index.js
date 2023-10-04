@@ -72,7 +72,7 @@ async function main() {
     const imgs = document.querySelectorAll('img');
     for (let element of imgs) {
         // textNodes.push(element);
-        data.set(element, { hasAlt: element.hasAttribute('alt'), type: {hasText: false, isFocusable: false} });
+        data.set(element, { hasAlt: element.hasAttribute('alt'), type: { hasText: false, isFocusable: false } });
     }
     const promises = new Map();
     async function getContrast(node) {
@@ -211,124 +211,125 @@ async function main() {
     };
     // Отображение результатов
     const renderResult = (node, info) => {
-        let modalData;
-        const modalLiStyle = `margin-bottom: 15px; list-style: initial; list-style-type: disc;`;
-        const modalSpanStyle = `font-weight: 700;`;
+        if (info.hasOwnProperty('type') && info.type.hasOwnProperty('hasText') && info.type.hasOwnProperty('isFocusable')) {
+            let modalData;
+            const modalLiStyle = `margin-bottom: 15px; list-style: initial; list-style-type: disc;`;
+            const modalSpanStyle = `font-weight: 700;`;
 
-        const data = {};
+            const data = {};
 
-        function okAll(node) {
-            data.status = 'okAll';
-            node.style.border = `5px solid #2FB176`;
-            node.style.cursor = 'pointer';
-            chartData.okAll += 1;
-        }
-
-        function ok(node) {
-            data.status = 'ok';
-            node.style.border = `5px solid #6BDF69`;
-            node.style.cursor = 'pointer';
-            chartData.ok += 1;
-        }
-
-        function warning(node) {
-            data.status = 'warning';
-            node.style.border = `5px solid #F1AF61`;
-            node.style.cursor = 'pointer';
-            chartData.warning += 1;
-        }
-
-        function danger(node) {
-            data.status = 'danger';
-            node.style.border = `5px solid #F16161`;
-            node.style.cursor = 'pointer';
-            chartData.danger += 1;
-        }
-
-        // Обработка нефокусируемых узлов, содержащих текст
-        if (info.type.hasText && !info.type.isFocusable) {
-            let warnings = '';
-            const fontSize = getPx(getCSS(node, 'font-size'));
-            const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
-            data.isLarge = isLarge;
-            if (isLarge) {
-                data.contrast = info.contrast.AALarge == 'pass';
-                data.AAAcontrast = info.contrast.AAALarge == 'pass';
-            } else {
-                data.contrast = info.contrast.AA == 'pass';
-                data.AAAcontrast = info.contrast.AAA == 'pass';
-            }
-            data.ratio = info.contrast.ratio;
-            if (!data.contrast || info.hasOwnProperty('transparentText')) {
-                danger(node);
-            } else if (fontSize <= 13) {
-                warning(node);
-            } else if (!data.AAAcontrast) {
-                ok(node);
-            } else if (data.AAAcontrast) {
-                okAll(node);
+            function okAll(node) {
+                data.status = 'okAll';
+                node.style.border = `5px solid #2FB176`;
+                node.style.cursor = 'pointer';
+                chartData.okAll += 1;
             }
 
-            if (data.status === 'danger') {
+            function ok(node) {
+                data.status = 'ok';
+                node.style.border = `5px solid #6BDF69`;
+                node.style.cursor = 'pointer';
+                chartData.ok += 1;
+            }
+
+            function warning(node) {
+                data.status = 'warning';
+                node.style.border = `5px solid #F1AF61`;
+                node.style.cursor = 'pointer';
+                chartData.warning += 1;
+            }
+
+            function danger(node) {
+                data.status = 'danger';
+                node.style.border = `5px solid #F16161`;
+                node.style.cursor = 'pointer';
+                chartData.danger += 1;
+            }
+
+            // Обработка нефокусируемых узлов, содержащих текст
+            if (info.type.hasText && !info.type.isFocusable) {
+                let warnings = '';
+                const fontSize = getPx(getCSS(node, 'font-size'));
+                const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
+                data.isLarge = isLarge;
                 if (isLarge) {
-                    warnings += `
+                    data.contrast = info.contrast.AALarge == 'pass';
+                    data.AAAcontrast = info.contrast.AAALarge == 'pass';
+                } else {
+                    data.contrast = info.contrast.AA == 'pass';
+                    data.AAAcontrast = info.contrast.AAA == 'pass';
+                }
+                data.ratio = info.contrast.ratio;
+                if (!data.contrast || info.hasOwnProperty('transparentText')) {
+                    danger(node);
+                } else if (fontSize <= 13) {
+                    warning(node);
+                } else if (!data.AAAcontrast) {
+                    ok(node);
+                } else if (data.AAAcontrast) {
+                    okAll(node);
+                }
+
+                if (data.status === 'danger') {
+                    if (isLarge) {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Размер текста больше/равен 18px или меньше/равен 14px при font-weight больше/равном 700, поэтому для него действуют правила для крупного текста. 
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста и 3:1 для крупного текста. 
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                } else {
-                    warnings += `
+                    } else {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста.
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                }
-                if (info.hasOwnProperty('transparentText')) {
-                    warnings += `
+                    }
+                    if (info.hasOwnProperty('transparentText')) {
+                        warnings += `
                         <li style="${modalLiStyle}">Прозрачность текста менее 50%: низкая контрастность с фоном.</li>
                     `;
+                    }
                 }
-            }
-            if (fontSize <= 13) {
-                warnings += `
+                if (fontSize <= 13) {
+                    warnings += `
                     <li style="${modalLiStyle}">Предупреждение: размер шрифта менее 14px, он может быть плохо виден.</li>
                 `;
-            }
-            if (data.status == 'ok') {
-                warnings += `
+                }
+                if (data.status == 'ok') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AA WCAG. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            } else if (data.status == 'okAll') {
-                warnings += `
+                } else if (data.status == 'okAll') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AAA WCAG, это наивысший возможный уровень соответствия. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            }
-            modalData = warnings;
-        }
-
-        // Обработка фокусируемых узлов, не содержащих текст
-        if (!info.type.hasText && info.type.isFocusable) {
-            let warnings = '';
-            data.hasFocusOutline = info.hasFocusOutline;
-            data.notImgAria = false;
-            if (((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) || !info.hasAria) {
-                data.notImgAria = true;
-            }
-            data.isImgHasAria = info.isImgHasAria;
-
-            if (!data.isImgHasAria) {
-                danger(node);
-            } else if (!data.hasFocusOutline || data.notImgAria) {
-                warning(node);
-            } else {
-                ok(node);
+                }
+                modalData = warnings;
             }
 
-            if (data.status === 'danger') {
-                warnings += `
+            // Обработка фокусируемых узлов, не содержащих текст
+            if (!info.type.hasText && info.type.isFocusable) {
+                let warnings = '';
+                data.hasFocusOutline = info.hasFocusOutline;
+                data.notImgAria = false;
+                if (((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) || !info.hasAria) {
+                    data.notImgAria = true;
+                }
+                data.isImgHasAria = info.isImgHasAria;
+
+                if (!data.isImgHasAria) {
+                    danger(node);
+                } else if (!data.hasFocusOutline || data.notImgAria) {
+                    warning(node);
+                } else {
+                    ok(node);
+                }
+
+                if (data.status === 'danger') {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         У этого элемента нет текста внутри, а также нет атрибута "aria-label". 
                         Программа чтения с экрана не поймет, для чего нужен этот элемент. 
@@ -339,221 +340,221 @@ async function main() {
                         либо написать его текстом внутри элемента (пример: "&#60;button&#62;Search&#60;/button	&#62;")
                     </li>
                 `;
-            }
-            if (!data.hasFocusOutline) {
-                warnings += `
+                }
+                if (!data.hasFocusOutline) {
+                    warnings += `
                     <li style="${modalLiStyle}">У этого элемента нет выделения (с помощью свойства outline) в состоянии фокуса. 
                     Доступность элемента с помощью клавиатуры низкая.</li>
                 `;
-            }
-            if (data.notImgAria) {
-                warnings += `
+                }
+                if (data.notImgAria) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         У этого элемента нет текста внутри, однако есть декоративный дочерний элемент (svg или img). 
                         К svg необходимо добавить добавить атрибут aria-hidden="true", а к img alt="" (пустая строка), чтобы программа чтения с экрана не останавливалась на них.
                         Если дочерний элемент не является декоративным, добавьте к нему атрибут "alt" с описанием.
                     </li>
                 `;
-            }
-            if (data.status == 'ok') {
-                warnings += `
+                }
+                if (data.status == 'ok') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует основным требованиям доступности.</li>
                 `;
-            }
-            modalData = warnings;
-        }
-
-
-        // Обработка фокусируемых узлов, содержащих текст
-        if (info.type.hasText && info.type.isFocusable && !info.hasOwnProperty('textColor')) {
-            let warnings = '';
-            const fontSize = getPx(getCSS(node, 'font-size'));
-            const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
-            data.isLarge = isLarge;
-            if (isLarge) {
-                data.contrast = info.contrast.AALarge == 'pass';
-                data.AAAcontrast = info.contrast.AAALarge == 'pass';
-            } else {
-                data.contrast = info.contrast.AA == 'pass';
-                data.AAAcontrast = info.contrast.AAA == 'pass';
-            }
-            data.ratio = info.contrast.ratio;
-            data.hasFocusOutline = info.hasFocusOutline;
-            data.notImgAria = false;
-            if ((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) {
-                data.notImgAria = true;
+                }
+                modalData = warnings;
             }
 
-            if (!data.contrast || info.hasOwnProperty('transparentText')) {
-                danger(node);
-            } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
-                warning(node);
-            } else if (!data.AAAcontrast) {
-                ok(node);
-            } else if (data.AAAcontrast) {
-                okAll(node);
-            }
 
-            if (data.status === 'danger') {
+            // Обработка фокусируемых узлов, содержащих текст
+            if (info.type.hasText && info.type.isFocusable && !info.hasOwnProperty('textColor')) {
+                let warnings = '';
+                const fontSize = getPx(getCSS(node, 'font-size'));
+                const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
+                data.isLarge = isLarge;
                 if (isLarge) {
-                    warnings += `
+                    data.contrast = info.contrast.AALarge == 'pass';
+                    data.AAAcontrast = info.contrast.AAALarge == 'pass';
+                } else {
+                    data.contrast = info.contrast.AA == 'pass';
+                    data.AAAcontrast = info.contrast.AAA == 'pass';
+                }
+                data.ratio = info.contrast.ratio;
+                data.hasFocusOutline = info.hasFocusOutline;
+                data.notImgAria = false;
+                if ((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) {
+                    data.notImgAria = true;
+                }
+
+                if (!data.contrast || info.hasOwnProperty('transparentText')) {
+                    danger(node);
+                } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
+                    warning(node);
+                } else if (!data.AAAcontrast) {
+                    ok(node);
+                } else if (data.AAAcontrast) {
+                    okAll(node);
+                }
+
+                if (data.status === 'danger') {
+                    if (isLarge) {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Размер текста больше/равен 18px или меньше/равен 14px при font-weight больше/равном 700, поэтому для него действуют правила для крупного текста. 
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста и 3:1 для крупного текста. 
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                } else {
-                    warnings += `
+                    } else {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста.
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                }
-                if (info.hasOwnProperty('transparentText')) {
-                    warnings += `
+                    }
+                    if (info.hasOwnProperty('transparentText')) {
+                        warnings += `
                         <li style="${modalLiStyle}">Прозрачность текста менее 50%: низкая контрастность с фоном.</li>
                     `;
+                    }
                 }
-            }
-            if (fontSize <= 13) {
-                warnings += `
+                if (fontSize <= 13) {
+                    warnings += `
                     <li style="${modalLiStyle}">Предупреждение: размер шрифта менее 13px, он может быть плохо виден.</li>
                 `;
-            }
-            if (!data.hasFocusOutline) {
-                warnings += `
+                }
+                if (!data.hasFocusOutline) {
+                    warnings += `
                     <li style="${modalLiStyle}">У этого элемента нет выделения (с помощью свойства outline) в состоянии фокуса. 
                     Доступность элемента с помощью клавиатуры низкая.</li>
                 `;
-            }
-            if (data.notImgAria) {
-                warnings += `
+                }
+                if (data.notImgAria) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         У этого элемента есть текст внутри, однако также есть декоративный дочерний элемент (svg или img). 
                         К svg необходимо добавить добавить атрибут aria-hidden="true", а к img alt="" (пустая строка), чтобы программа чтения с экрана не останавливалась на них.
                         Если дочерний элемент не является декоративным, добавьте к нему атрибут "alt" с описанием.
                     </li>
                 `;
-            }
-            if (data.status == 'ok') {
-                warnings += `
+                }
+                if (data.status == 'ok') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AA WCAG. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            } else if (data.status == 'okAll') {
-                warnings += `
+                } else if (data.status == 'okAll') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AAA WCAG, это наивысший возможный уровень соответствия. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            }
-            modalData = warnings;
-        }
-
-        if (node.tagName == 'input' || node.tagName == 'textarea') {
-            let warnings = '';
-            const fontSize = getPx(getCSS(node, 'font-size'));
-            const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
-            data.isLarge = isLarge;
-            if (isLarge) {
-                data.contrast = info.contrast.AALarge == 'pass';
-                data.AAAcontrast = info.contrast.AAALarge == 'pass';
-            } else {
-                data.contrast = info.contrast.AA == 'pass';
-                data.AAAcontrast = info.contrast.AAA == 'pass';
-            }
-            data.ratio = info.contrast.ratio;
-            data.hasFocusOutline = info.hasFocusOutline;
-
-            if (!data.contrast || info.hasOwnProperty('transparentText') || (!node.hasAttribute('title') || !node.hasAttribute('aria-label') || !node.hasAttribute('aria-labelby'))) {
-                danger(node);
-            } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
-                warning(node);
-            } else if (!data.AAAcontrast) {
-                ok(node);
-            } else if (data.AAAcontrast) {
-                okAll(node);
+                }
+                modalData = warnings;
             }
 
-            if (data.status === 'danger') {
+            if (node.tagName == 'input' || node.tagName == 'textarea') {
+                let warnings = '';
+                const fontSize = getPx(getCSS(node, 'font-size'));
+                const isLarge = fontSize >= 18 || (fontSize >= 14 && (getCSS(node, 'font-weight') === 'bold') || parseInt(getCSS(node, 'font-weight')) >= 700);
+                data.isLarge = isLarge;
                 if (isLarge) {
-                    warnings += `
+                    data.contrast = info.contrast.AALarge == 'pass';
+                    data.AAAcontrast = info.contrast.AAALarge == 'pass';
+                } else {
+                    data.contrast = info.contrast.AA == 'pass';
+                    data.AAAcontrast = info.contrast.AAA == 'pass';
+                }
+                data.ratio = info.contrast.ratio;
+                data.hasFocusOutline = info.hasFocusOutline;
+
+                if (!data.contrast || info.hasOwnProperty('transparentText') || (!node.hasAttribute('title') || !node.hasAttribute('aria-label') || !node.hasAttribute('aria-labelby'))) {
+                    danger(node);
+                } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
+                    warning(node);
+                } else if (!data.AAAcontrast) {
+                    ok(node);
+                } else if (data.AAAcontrast) {
+                    okAll(node);
+                }
+
+                if (data.status === 'danger') {
+                    if (isLarge) {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Размер текста больше/равен 18px или меньше/равен 14px при font-weight больше/равном 700, поэтому для него действуют правила для крупного текста. 
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста и 3:1 для крупного текста. 
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                } else {
-                    warnings += `
+                    } else {
+                        warnings += `
                         <li style="${modalLiStyle}">
                             Уровень AA WCAG требует коэффициента контрастности не менее 4,5:1 для обычного текста.
                             Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span>
                         </li>
                     `;
-                }
-                if (info.hasOwnProperty('transparentText')) {
-                    warnings += `
+                    }
+                    if (info.hasOwnProperty('transparentText')) {
+                        warnings += `
                         <li style="${modalLiStyle}">Прозрачность текста менее 50%: низкая контрастность с фоном.</li>
                     `;
-                }
-                if (!node.hasAttribute('title') || !node.hasAttribute('aria-label') || !node.hasAttribute('aria-labelby')) {
-                    warnings += `
+                    }
+                    if (!node.hasAttribute('title') || !node.hasAttribute('aria-label') || !node.hasAttribute('aria-labelby')) {
+                        warnings += `
                         <li style="${modalLiStyle}">Чтобы программы чтения с экрана могли распозоновать предназначение конкретного элемента ввода текта,
                         необходимо указать один из атрибутов: "title", "aria-label", "aria-labelby".
                         </li>
                     `;
+                    }
                 }
-            }
-            if (fontSize <= 13) {
-                warnings += `
+                if (fontSize <= 13) {
+                    warnings += `
                     <li style="${modalLiStyle}">Предупреждение: размер шрифта менее 13px, он может быть плохо виден.</li>
                 `;
-            }
-            if (!data.hasFocusOutline) {
-                warnings += `
+                }
+                if (!data.hasFocusOutline) {
+                    warnings += `
                     <li style="${modalLiStyle}">У этого элемента нет выделения (с помощью свойства outline) в состоянии фокуса. 
                     Доступность элемента с помощью клавиатуры низкая.</li>
                 `;
-            }
-            if (data.status == 'ok') {
-                warnings += `
+                }
+                if (data.status == 'ok') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AA WCAG. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            } else if (data.status == 'okAll') {
-                warnings += `
+                } else if (data.status == 'okAll') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AAA WCAG, это наивысший возможный уровень соответствия. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            }
-            modalData = warnings;
-        }
-
-        // Обработка ссылок внутри текста (содержит textColor)
-        if (info.type.hasText && info.type.isFocusable && info.hasOwnProperty('textColor')) {
-            const style = window.getComputedStyle(node);
-            let result = style.getPropertyValue('text-decoration');
-            const hasUnderline = /underline/.test(result);
-            let warnings = '';
-            const fontSize = getPx(getCSS(node, 'font-size'));
-            const fail = info.contrast["Link to Body Text"].conformance === 'fail'
-                || info.contrast["Link to Background"].conformance === 'fail'
-                || info.contrast["Body Text to Background"].conformance === 'fail';
-            data.ratio = info.contrast.ratio;
-            data.hasFocusOutline = info.hasFocusOutline;
-            data.notImgAria = false;
-            if ((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) {
-                data.notImgAria = true;
-            }
-            if ((fail && !hasUnderline) || info.hasOwnProperty('transparentText')) {
-                danger(node);
-            } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
-                warning(node);
-            } else if (!data.AAAcontrast) {
-                ok(node);
-            } else if (data.AAAcontrast) {
-                okAll(node);
+                }
+                modalData = warnings;
             }
 
-            warnings += `
+            // Обработка ссылок внутри текста (содержит textColor)
+            if (info.type.hasText && info.type.isFocusable && info.hasOwnProperty('textColor')) {
+                const style = window.getComputedStyle(node);
+                let result = style.getPropertyValue('text-decoration');
+                const hasUnderline = /underline/.test(result);
+                let warnings = '';
+                const fontSize = getPx(getCSS(node, 'font-size'));
+                const fail = info.contrast["Link to Body Text"].conformance === 'fail'
+                    || info.contrast["Link to Background"].conformance === 'fail'
+                    || info.contrast["Body Text to Background"].conformance === 'fail';
+                data.ratio = info.contrast.ratio;
+                data.hasFocusOutline = info.hasFocusOutline;
+                data.notImgAria = false;
+                if ((node.tagName == 'A' || node.tagName == 'BUTTON') && info.hasImg && !info.isImgHasAria) {
+                    data.notImgAria = true;
+                }
+                if ((fail && !hasUnderline) || info.hasOwnProperty('transparentText')) {
+                    danger(node);
+                } else if (fontSize <= 13 || !data.hasFocusOutline || data.notImgAria) {
+                    warning(node);
+                } else if (!data.AAAcontrast) {
+                    ok(node);
+                } else if (data.AAAcontrast) {
+                    okAll(node);
+                }
+
+                warnings += `
                 <li style="${modalLiStyle}">
                     Этот элемент является ссылкой внутри текста. Для таких элементов по правилам WCAG оценивается контраст не только цвета элемента и фона, 
                     но и цвета элемента и окружающего текста, и цвета окружающего текста и фона.
@@ -563,8 +564,8 @@ async function main() {
                 </li>
             `;
 
-            if (info.contrast["Link to Body Text"].conformance === 'fail' && !hasUnderline) {
-                warnings += `
+                if (info.contrast["Link to Body Text"].conformance === 'fail' && !hasUnderline) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Ссылка не имеет графического выделения с помощью подчеркивания.
                     </li>
@@ -573,16 +574,16 @@ async function main() {
                         Коэффициент контрастности ссылки относительно окружающего текста: <span style="${modalSpanStyle}">${info.contrast["Link to Body Text"].ratio}</span>
                     </li>
                 `;
-            } else {
-                warnings += `
+                } else {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Коэффициент контрастности ссылки относительно окружающего текста: <span style="${modalSpanStyle}">${info.contrast["Link to Body Text"].ratio}</span>
                     </li>
                 `;
-            };
+                };
 
-            if (info.contrast["Link to Background"].conformance === 'fail' && !hasUnderline) {
-                warnings += `
+                if (info.contrast["Link to Background"].conformance === 'fail' && !hasUnderline) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Ссылка не имеет графического выделения с помощью подчеркивания.
                     </li>
@@ -591,16 +592,16 @@ async function main() {
                         Коэффициент контрастности ссылки относительно фона: <span style="${modalSpanStyle}">${info.contrast["Link to Background"].ratio}</span>
                     </li>
                 `;
-            } else {
-                warnings += `
+                } else {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Коэффициент контрастности ссылки относительно фона: <span style="${modalSpanStyle}">${info.contrast["Link to Background"].ratio}</span>
                     </li>
                 `;
-            }
+                }
 
-            if (info.contrast["Body Text to Background"].conformance === 'fail' && !hasUnderline) {
-                warnings += `
+                if (info.contrast["Body Text to Background"].conformance === 'fail' && !hasUnderline) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Ссылка не имеет графического выделения с помощью подчеркивания.
                     </li>
@@ -609,106 +610,106 @@ async function main() {
                         Коэффициент контрастности окружающего текста относительно фона: <span style="${modalSpanStyle}">${info.contrast["Body Text to Background"].ratio}</span>
                     </li>
                 `;
-            } else {
-                warnings += `
+                } else {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         Коэффициент контрастности этого окружающего относительно фона: <span style="${modalSpanStyle}">${info.contrast["Body Text to Background"].ratio}</span>
                     </li>
                 `;
-            }
+                }
 
-            if (info.hasOwnProperty('transparentText')) {
-                warnings += `
+                if (info.hasOwnProperty('transparentText')) {
+                    warnings += `
                     <li style="${modalLiStyle}">Прозрачность текста менее 50%: низкая контрастность с фоном.</li>
                 `;
-            }
-            if (fontSize <= 13) {
-                warnings += `
+                }
+                if (fontSize <= 13) {
+                    warnings += `
                     <li style="${modalLiStyle}">Предупреждение: размер шрифта менее 13px, он может быть плохо виден.</li>
                 `;
-            }
-            if (!data.hasFocusOutline) {
-                warnings += `
+                }
+                if (!data.hasFocusOutline) {
+                    warnings += `
                     <li style="${modalLiStyle}">У этого элемента нет выделения (с помощью свойства outline) в состоянии фокуса. 
                     Доступность элемента с помощью клавиатуры низкая.</li>
                 `;
-            }
-            if (data.notImgAria) {
-                warnings += `
+                }
+                if (data.notImgAria) {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         У этого элемента есть текст внутри, однако также есть декоративный дочерний элемент (svg или img). 
                         К svg необходимо добавить добавить атрибут aria-hidden="true", а к img alt="" (пустая строка), чтобы программа чтения с экрана не останавливалась на них.
                         Если дочерний элемент не является декоративным, добавьте к нему атрибут "alt" с описанием.
                     </li>
                 `;
-            }
-            if (data.status == 'ok') {
-                warnings += `
+                }
+                if (data.status == 'ok') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AA WCAG. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
-            } else if (data.status == 'okAll') {
-                warnings += `
+                } else if (data.status == 'okAll') {
+                    warnings += `
                     <li style="${modalLiStyle}">Текст соотвествует уровню AAA WCAG, это наивысший возможный уровень соответствия. Коэффициент контрастности этого текста: <span style="${modalSpanStyle}">${data.ratio}</span></li>
                 `;
+                }
+                modalData = warnings;
             }
-            modalData = warnings;
-        }
 
 
-        // Обработка нефокусируемых узлов, не содержащих текст
-        if (!info.type.hasText && !info.type.isFocusable) {
-            let warnings = ''
-            if (!info.hasAlt) {
-                danger(node);
-            } else {
-                ok(node);
-            };
+            // Обработка нефокусируемых узлов, не содержащих текст
+            if (!info.type.hasText && !info.type.isFocusable) {
+                let warnings = ''
+                if (!info.hasAlt) {
+                    danger(node);
+                } else {
+                    ok(node);
+                };
 
-            if (data.status === 'danger') {
-                warnings += `
+                if (data.status === 'danger') {
+                    warnings += `
                     <li style="${modalLiStyle}">
                         У этого изображения нет абтрибута alt. Добавьте описание в alt, чтобы оно было доступно пользователям, которые используют программы чтения с экрана.
                     </li>
                 `;
-            } else {
-                warnings += `
+                } else {
+                    warnings += `
                 <li style="${modalLiStyle}">
                  Изображение соответствует требованиям доступности
                 </li>
             `;
+                }
+                modalData = warnings;
             }
-            modalData = warnings;
-        }
 
 
-        let textStatus;
-        let statusInfo;
-        let borderStatus;
-        if (data.status === 'okAll') {
-            textStatus = '#29A76E';
-            borderStatus = '#2FAB73';
-            statusInfo = `Этот элемент соответствует наиболее высокому уровню требований доступности.`;
-        } else if (data.status === 'ok') {
-            textStatus = '#38CD35';
-            borderStatus = '#51D94F';
-            statusInfo = `Этот элемент соответствует требованиям доступности.`;
-        } if (data.status === 'warning') {
-            textStatus = '#ED8B18';
-            borderStatus = '#F8941E';
-            statusInfo = `Этот элемент соответствует минимальным требованиям доступности, но необходимо исправить некоторые парметры.`
-        } if (data.status === 'danger') {
-            textStatus = '#E92121';
-            borderStatus = '#FF2828';
-            statusInfo = `Этот элемент не соответствует минимальным требованиям доступности.`
-        }
-        // Создание модального окна с информацией
-        const modalBgStyle = `display: none; position: fixed; z-index: 3000; padding-top: 100px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4);`;
-        const modalContentStyle = `z-index: 3001; border-radius: 10px; border: 5px solid ${borderStatus}; background: #FFFFFF; padding: 20px; margin: auto; width: 60%; height: fit-content;`;
-        const modalHeaderStyle = `color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: 18px;`;
-        const modalStatusStyle = `color: ${textStatus}; font-size: 20px; font-style: normal; font-weight: 700;`;
-        const modalListStyle = `list-style-position: inside; margin-left: 3%; list-style: initial; list-style-type: disc; color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: 16px;`;
-        const modalClose = `color: #111111; float: right; font-size: 28px; font-weight: bold;`;
-        const modalText = `
+            let textStatus;
+            let statusInfo;
+            let borderStatus;
+            if (data.status === 'okAll') {
+                textStatus = '#29A76E';
+                borderStatus = '#2FAB73';
+                statusInfo = `Этот элемент соответствует наиболее высокому уровню требований доступности.`;
+            } else if (data.status === 'ok') {
+                textStatus = '#38CD35';
+                borderStatus = '#51D94F';
+                statusInfo = `Этот элемент соответствует требованиям доступности.`;
+            } if (data.status === 'warning') {
+                textStatus = '#ED8B18';
+                borderStatus = '#F8941E';
+                statusInfo = `Этот элемент соответствует минимальным требованиям доступности, но необходимо исправить некоторые парметры.`
+            } if (data.status === 'danger') {
+                textStatus = '#E92121';
+                borderStatus = '#FF2828';
+                statusInfo = `Этот элемент не соответствует минимальным требованиям доступности.`
+            }
+            // Создание модального окна с информацией
+            const modalBgStyle = `display: none; position: fixed; z-index: 3000; padding-top: 100px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4);`;
+            const modalContentStyle = `z-index: 3001; border-radius: 10px; border: 5px solid ${borderStatus}; background: #FFFFFF; padding: 20px; margin: auto; width: 60%; height: fit-content;`;
+            const modalHeaderStyle = `color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: 18px;`;
+            const modalStatusStyle = `color: ${textStatus}; font-size: 20px; font-style: normal; font-weight: 700;`;
+            const modalListStyle = `list-style-position: inside; margin-left: 3%; list-style: initial; list-style-type: disc; color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: 16px;`;
+            const modalClose = `color: #111111; float: right; font-size: 28px; font-weight: bold;`;
+            const modalText = `
             <div style='${modalContentStyle}'>
                 <button type="button" class='modal-close' style='${modalClose}'>&times;</button>
                 <p style='${modalHeaderStyle}'>Тип элемента: <span style="${modalSpanStyle}">${node.tagName.toLowerCase()}</span></p>
@@ -720,28 +721,29 @@ async function main() {
                 </ul>
             </div>
         `;
-        const modal = document.createElement('div');
-        modal.style.cssText = modalBgStyle;
-        modal.innerHTML = modalText;
-        document.body.append(modal);
-        modals.set(node, modal);
-        const showModal = (e) => {
-            e.preventDefault();
-            const modal = modals.get(e.target);
-            if (modal) {
-                const close = modal.querySelector(".modal-close");
-                modal.style.display = "block";
-                close.onclick = function () {
-                    modal.style.display = "none";
-                }
-                window.onclick = function (event) {
-                    if (event.target == modal) {
+            const modal = document.createElement('div');
+            modal.style.cssText = modalBgStyle;
+            modal.innerHTML = modalText;
+            document.body.append(modal);
+            modals.set(node, modal);
+            const showModal = (e) => {
+                e.preventDefault();
+                const modal = modals.get(e.target);
+                if (modal) {
+                    const close = modal.querySelector(".modal-close");
+                    modal.style.display = "block";
+                    close.onclick = function () {
                         modal.style.display = "none";
+                    }
+                    window.onclick = function (event) {
+                        if (event.target == modal) {
+                            modal.style.display = "none";
+                        }
                     }
                 }
             }
+            node.onclick = showModal;
         }
-        node.onclick = showModal;
     }
     for (let [node, info] of data) {
         if (node.getAttribute('id') != 'accessibility-button') {

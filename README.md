@@ -1,6 +1,6 @@
 # Web accessibility checker
 
-Плагин для определения веб-доступности элементов. Разработан для [IAHD DEI Web Accessibility Hackathon](https://iahdhackathon2023.cc/).
+Плагин для определения веб-доступности элементов. Призер хакатона [IAHD DEI Web Accessibility Hackathon](https://iahdhackathon2023.cc/).
 
 ## Функционал
 - Определение контрастности текстовых элементов и элементов, которые могут содержать текст (например input, textarea);
