@@ -10,6 +10,10 @@
     "type": "git",
     "url": "git+https://github.com/Alice8080/web-accessibility-checker.git"
   },
+  "keywords": [
+    "web-accessibility",
+    "accessibility"
+  ],
   "author": "Alice Pyulzyu",
   "license": "ISC",
   "bugs": {
